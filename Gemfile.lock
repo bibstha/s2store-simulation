@@ -1,10 +1,14 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    aliastable (1.0.0)
+      skewheap (~> 1.0)
     minitest (5.4.2)
+    skewheap (1.0.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  aliastable
   minitest

@@ -3,36 +3,36 @@ require 'grid'
 
 class GridTest < MiniTest::Test
 
-  def setup
-
+  def test_raises_error_on_invalid_num_of_features
+    assert_raises(Grid::FeatureCountZero) { Grid.new(0) }
+    assert_raises(Grid::FeatureCountZero) { Grid.new(101) }
   end
 
-  # Called after every test method runs. Can be used to tear
-  # down fixture information.
 
-  def teardown
-    # Do nothing
-  end
 
-  def grid_hash_has_pre_filled_indices
+  def test_grid_hash_has_pre_filled_indices
     grid = Grid.new(1)
-    assert_equal [], grid.cells.fetch(0)
-    assert_equal [], grid.cells.fetch(9)
-    assert_raise(IndexError) { grid.cells.fetch(10) }
+    assert_equal SortedSet, grid.cells.fetch(0).class
+    assert_equal SortedSet, grid.cells.fetch(9).class
+    assert_equal 0, grid.cells.fetch(0).size
+    assert_raises(KeyError) { grid.cells.fetch(10) }
   end
 
   def test_randomize
     grid1 = Grid.new(1)
     grid1.generate_random_cells
-    assert_equal(1, grid1.cell_count)
+    # puts grid1
+    assert_in_delta(1, grid1.feature_count, 2)
 
     grid2 = Grid.new(5)
     grid2.generate_random_cells
-    assert_equal(5, grid2.cell_count)
+    # puts grid2
+    assert_in_delta(5, grid2.feature_count, 5)
 
     grid3 = Grid.new(50)
     grid3.generate_random_cells
-    assert_equal(50, grid3.cell_count)
+    # puts grid3
+    assert_in_delta(50, grid3.feature_count, 10)
   end
 
   def test_large_random_cells
