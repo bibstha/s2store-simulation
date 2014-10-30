@@ -1,51 +1,98 @@
 require_relative 'helper'
 require_relative 'developer'
+require_relative 'service'
+require_relative 'user'
 
 module S2Eco
 
   class World
 
-    def initialize
-      # starting population
-        # make sure they are ready
-      # starting entities
-      # set starting date
+    attr_reader :users
+    attr_reader :developers
+    attr_reader :current_day
 
-      @current_day = 0
-      @developers  = []
-      increase_developer_population
+    def initialize
+      @current_day   = 0
+      @developers    = []
+      @users         = []
+      @inactive_devs = []
+      @services      = []
     end
 
     def start
+      # initial developer and entities population
+      increase_developer_population
+      increase_user_population
+      increase_entities_population
+
+
       1.upto(DAYS_TOTAL).each do |day|
-        p "Day: #{day}"
-        @current_day = day
+        increase_day
         start_day
+      end
+
+      puts "IS Malicious"
+      @services.each do |s|
+        if s.is_malicious?
+          puts s
+          break
+        end
+      end
+
+      puts "NOT Malicious"
+      @services.each do |s|
+        unless s.is_malicious?
+          puts s
+          break
+        end
       end
     end
 
+    # always starts with the 1st day, no 0th day
     def start_day
+      service_ready_developers = @developers.select { |dev| dev.receive_new_service(@current_day) }
+
+      malicious_service_count = @services.count { |s| s.is_malicious? }
+      puts "Day: #{@current_day}, Services: #{@services.count}, Malicious: #{malicious_service_count}"
+      log([
+        @current_day, 
+        @services.count, 
+        service_ready_developers.size, 
+        malicious_service_count,
+        @developers.size
+        ], 'service_count')
+      # log([@current_day, devs_total_size, @inactive_devs.size], 'dev_count')
+
       entities = service_ready_developers.map do |dev|
         build_entities(dev)
+        dev.refresh_active_state
       end
+
       update_s2store(entities)
       users_download_services
       users_provide_feedback
       calculate_system_rankings
       increase_agent_population
-    end
 
-    def service_ready_developers
-      @developers.select { |dev| dev.service_ready?(@current_day) }
+
     end
 
     def build_entities(dev)
+
+      build_service(dev)
+      
     end
 
     def update_s2store(entities)
     end
 
     def users_download_services
+      users.each do |u|
+        u.day = @current_day
+        if u.days_elapsed == 0
+          # download
+        end
+      end
     end
 
     def users_provide_feedback
@@ -60,21 +107,60 @@ module S2Eco
 
     #-- 
     def increase_developer_population
+      @developers.select { |dev| !dev.is_active? }.tap { |arr| @inactive_devs.push(*arr) }
+      @developers.delete_if { |dev| !dev.is_active? }
+
       devs_total_size     = pop_t_dev.ceil
-      devs_yesterday_size = @developers.size
+      devs_yesterday_size = @developers.size + @inactive_devs.size
       devs_new_size       = devs_total_size - devs_yesterday_size
 
       1.upto(devs_new_size).each do 
-        @developers << Developer.new(start_day: @current_day)
+        @developers << Developer.new(@current_day)
       end
-
-      log(devs_new_size, 'dev_count')
     end
 
     def pop_t_dev
       POP_MIN_DEV + (POP_MAX_DEV - POP_MIN_DEV) / (1 + Math.exp(S_DEV * @current_day - D_DEV))
     end
+
+    def increase_user_population
+
+      users_total_size     = pop_t_user.ceil
+      users_yesterday_size = @users.size
+      users_new_required   = users_total_size - users_yesterday_size
+
+      1.upto(users_new_required).each do
+        user = User.new(@current_day)
+        user.fill
+        @users << user
+      end
+    end
+
+    def pop_t_user
+      POP_MIN_USER + (POP_MAX_USER - POP_MIN_USER) / (1 + Math.exp(S_USER * @current_day - D_USER))
+    end
+
+    def increase_entities_population
+    end
+
+    def build_service(dev)
+      service = Service.new
+      service.fill
+      service.developer = dev
+      @services << service
+    end
+
+    def increase_day
+      @current_day += 1
+    end
+
   end
 end
 
-S2Eco::World.new.start
+if __FILE__ == $0
+  require 'benchmark'
+  Benchmark.bm do |bm|
+    bm.report { reset_logs(['dev_count', 'service_count']) }
+    bm.report { S2Eco::World.new.start }
+  end
+end
