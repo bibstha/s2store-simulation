@@ -32,5 +32,16 @@ module S2Eco
       @days_btw_browse ||= rand(BRO_MIN..BRO_MAX)
     end
 
+    def select_interested_services(services)
+
+    end
+
+    def rand_cell_value(row, col)
+      if row < U_AVOID_SIZE && col < U_AVOID_SIZE
+        false
+      else
+        super
+      end
+    end
   end
 end

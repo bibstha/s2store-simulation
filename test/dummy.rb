@@ -1,13 +1,7 @@
-class Dummy
-  attr_reader :greeting
+require 'matrix'
 
-  def speak
-    puts "Dummy says #{greeting}"
-  end
-
-  def greeting=(greeting)
-    @greeting = greeting << "!!!"
-  end
+x = lambda do |*a|
+  p a
 end
 
-Dummy.new.tap { |d| d.greeting = "Ahoi!"}.speak
+x.call(1, 2, 3)

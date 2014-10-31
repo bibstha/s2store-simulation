@@ -1,4 +1,5 @@
 require_relative 'constants'
 require_relative 'log'
+require_relative 'store'
 
-STORE = S2Store.new
+S2STORE = S2Eco::Store.new

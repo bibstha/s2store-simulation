@@ -29,4 +29,8 @@ module S2Eco
   D_USER       = -4.0
 
   BRO_MIN, BRO_MAX = [1, 360]
+
+  KEY_WRD_MAX  = 200
+
+  U_AVOID_SIZE = 3
 end

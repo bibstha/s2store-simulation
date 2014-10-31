@@ -16,35 +16,15 @@ module S2Eco
       @developers    = []
       @users         = []
       @inactive_devs = []
-      @services      = []
     end
 
     def start
-      # initial developer and entities population
-      increase_developer_population
-      increase_user_population
+      increase_agent_population
       increase_entities_population
-
 
       1.upto(DAYS_TOTAL).each do |day|
         increase_day
         start_day
-      end
-
-      puts "IS Malicious"
-      @services.each do |s|
-        if s.is_malicious?
-          puts s
-          break
-        end
-      end
-
-      puts "NOT Malicious"
-      @services.each do |s|
-        unless s.is_malicious?
-          puts s
-          break
-        end
       end
     end
 
@@ -52,45 +32,62 @@ module S2Eco
     def start_day
       service_ready_developers = @developers.select { |dev| dev.receive_new_service(@current_day) }
 
-      malicious_service_count = @services.count { |s| s.is_malicious? }
-      puts "Day: #{@current_day}, Services: #{@services.count}, Malicious: #{malicious_service_count}"
-      log([
-        @current_day, 
-        @services.count, 
-        service_ready_developers.size, 
-        malicious_service_count,
-        @developers.size
-        ], 'service_count')
-      # log([@current_day, devs_total_size, @inactive_devs.size], 'dev_count')
-
-      entities = service_ready_developers.map do |dev|
-        build_entities(dev)
-        dev.refresh_active_state
+      malicious_service_count = S2STORE.malicious_service_count
+      
+      log(
+        [
+          @current_day, 
+          S2STORE.service_count, 
+          # service_ready_developers.size, 
+          malicious_service_count,
+          @developers.size
+        ], 
+        'service_count'
+      )
+      
+      entities_build_today = service_ready_developers.map do |dev|
+        build_entities(dev).tap do
+          dev.refresh_active_state
+        end
       end
 
-      update_s2store(entities)
+      update_s2store(entities_build_today)
       users_download_services
       users_provide_feedback
       calculate_system_rankings
       increase_agent_population
 
+      puts "Day: #{@current_day}, Services: #{S2STORE.service_count}"
+      puts "Day: #{@current_day}, Developers: #{@developers.count}"
+      puts "Day: #{@current_day}, Users: #{@users.count}"
 
     end
 
     def build_entities(dev)
-
-      build_service(dev)
-      
+      service = [
+        build_service(dev),
+        # context models,
+        # access groups
+      ]
     end
 
-    def update_s2store(entities)
+    # depends upon the return values of build_entities
+    def update_s2store(entities_ary)
+      entities_ary.each do |entities|
+        service = entities.first
+        S2STORE.upload_service(service)
+      end
     end
 
     def users_download_services
       users.each do |u|
         u.day = @current_day
         if u.days_elapsed == 0
-          # download
+          # keyword search
+          search_result_services = S2STORE.keyword_search_services
+          u.select_interested_services(search_result_services).each do |interested_service|
+            S2STORE.download(interested_service, u)
+          end
         end
       end
     end
@@ -103,6 +100,7 @@ module S2Eco
 
     def increase_agent_population
       increase_developer_population
+      increase_user_population
     end
 
     #-- 
@@ -147,7 +145,7 @@ module S2Eco
       service = Service.new
       service.fill
       service.developer = dev
-      @services << service
+      service
     end
 
     def increase_day
@@ -163,4 +161,7 @@ if __FILE__ == $0
     bm.report { reset_logs(['dev_count', 'service_count']) }
     bm.report { S2Eco::World.new.start }
   end
+
+  analyser = StatsAnalyser.new(S2STORE)
+  # analyser.
 end

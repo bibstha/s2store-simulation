@@ -4,11 +4,13 @@ require 'alias'
 module S2Eco
   class Grid
 
+    attr_reader :features
+
     def fill
-      @features = Matrix.build(10, 10) { rand_cell_value }
+      @features = Matrix.build(10, 10) { |row, col| rand_cell_value(row, col) }
     end
 
-    def rand_cell_value
+    def rand_cell_value(row, col)
       rand_picker.generate
     end
 
