@@ -1,6 +1,8 @@
 module S2Eco
   class Store
 
+    attr_reader :services
+
     def initialize
       @services = []
     end
@@ -22,10 +24,11 @@ module S2Eco
     end
 
     def top_new_services
-
+      []
     end
 
     def top_best_services
+      []
     end
 
     # Return random number of services returned
@@ -38,6 +41,16 @@ module S2Eco
         @services[key]
       end
       
+    end
+
+    def download(service, user)
+      service.download_count += 1
+      user.install_service(service)
+    end
+
+    def vote(service, user, amount)
+      user.voted_services[service] = amount
+      service.votes << amount
     end
   end
 end

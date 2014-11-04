@@ -20,6 +20,14 @@ module S2Eco
       @dev_duration = rand_dev_duration
     end
 
+    # Support characteristic
+    # 0 = fixes most of the bugs in each iteration
+    # 1 = lazy and ignores any bugs
+    # 2 = fixes and at the same time introduces malicious items
+    def support_characteristic
+      @support_characteristic ||= rand(0..2)
+    end
+
     def receive_new_service(day)
       days_taken = day - (productive_days.last || 0)
       if days_taken >= dev_duration

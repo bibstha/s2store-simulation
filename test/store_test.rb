@@ -1,6 +1,7 @@
 require_relative 'test_helper'
 require 'store'
 require 'service'
+require 'user'
 
 module S2Eco
 
@@ -21,5 +22,18 @@ module S2Eco
       end
     end
 
+    def test_download
+      store = Store.new
+      user = User.new(0)
+      service = Service.new
+
+      assert_equal 0, service.download_count
+      store.download(service, user)
+      store.download(service, user)
+
+      assert_equal 2, service.download_count
+    end
+
+    # def test
   end
 end

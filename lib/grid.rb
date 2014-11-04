@@ -4,7 +4,7 @@ require 'alias'
 module S2Eco
   class Grid
 
-    attr_reader :features
+    attr_accessor :features
 
     def fill
       @features = Matrix.build(10, 10) { |row, col| rand_cell_value(row, col) }

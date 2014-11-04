@@ -1,5 +1,6 @@
 module S2Eco
   # Total number of days to simulate
+  # DAYS_TOTAL   = 10
   DAYS_TOTAL   = 100
   # DAYS_TOTAL   = 360
   # DAYS_TOTAL = 1080
@@ -33,4 +34,9 @@ module S2Eco
   KEY_WRD_MAX  = 200
 
   U_AVOID_SIZE = 3
+
+  MALICIOUS_SIDE = 0..1
+  BUGGY_SIDE     = 7..9
+
+  P_VOTER        = 0.2
 end
