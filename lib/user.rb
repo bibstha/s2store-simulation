@@ -2,7 +2,13 @@ require_relative 'grid'
 require 'set'
 
 module S2Eco
-  class User < Grid
+  class User < Sequel::Model
+    
+    # many_to_many :services
+    one_to_many :downloads
+    many_to_many :services, join_table: :downloads
+
+    include Grid
 
     attr_reader :installed_services
     attr_reader :voted_services
@@ -21,17 +27,25 @@ module S2Eco
       end
     end
 
-    def initialize(join_day)
-      super()
-      @join_day           = join_day
-      @day                = join_day
-      @last_browsed_day   = join_day - rand(0..days_btw_browse)
-      @installed_services = Set.new
-      @voted_services     = {}
-
-      # Min app rating for download
-      @voter = self.class.vote_rand_picker.generate # true or false
+    def initialize(*args)
+      super(*args)
+      self.create_day       ||= 0
+      self.days_btw_browse  ||= rand(BROWSE_RANGE)
+      self.last_browse_day  ||= create_day - rand(0..days_btw_browse)
+      self.grid             ||= generate_grid
+      self.is_voter         ||= self.class.vote_rand_picker.generate
     end
+    # def initialize(join_day)
+    #   super()
+    #   @join_day           = join_day
+    #   @day                = join_day
+    #   @last_browsed_day   = join_day - rand(0..days_btw_browse)
+    #   @installed_services = Set.new
+    #   @voted_services     = {}
+
+    #   # Min app rating for download
+    #   @voter = self.class.vote_rand_picker.generate # true or false
+    # end
 
     def day=(day)
       @day = day
@@ -40,22 +54,14 @@ module S2Eco
       end
     end
 
-    def days_elapsed
-      @day - @last_browsed_day
-    end
-
-    def days_btw_browse
-      @days_btw_browse ||= rand(BRO_MIN..BRO_MAX)
-    end
-
     def select_interested_services(services)
-      services.select {|s| !@installed_services.include?(s)}
-      .select do |service|
+      services -= self.services
+      services.select do |service|
         accepted = true
         catch(:false) do
-          0.upto(service.features.row_count-1).each do |r|
-            0.upto(service.features.column_count-1).each do |c|
-              if service.features[r, c] && !@features[r, c]
+          0.upto(service.grid.row_count-1).each do |r|
+            0.upto(service.grid.column_count-1).each do |c|
+              if service.grid[r, c] && !grid[r, c]
                 accepted = false
                 throw :false
               end
@@ -66,6 +72,10 @@ module S2Eco
       end
     end
 
+    def unvoted_services
+      services.where('services_users.vote is NULL')
+    end
+
     def rand_cell_value(row, col)
       if row < U_AVOID_SIZE && col < U_AVOID_SIZE
         false
@@ -74,16 +84,20 @@ module S2Eco
       end
     end
 
-    def install_service(service)
-      @installed_services << service
-    end
+    # def install_service(service)
+    #   @installed_services << service
+    # end
 
-    def service_installed?(service)
-      @installed_services.include?(service)
-    end
+    # def service_installed?(service)
+    #   @installed_services.include?(service)
+    # end
 
     def is_voter?
       @voter
+    end
+
+    def self.ready_to_browse_on(day)
+      where('? - last_browse_day = days_btw_browse', day)
     end
   end
 end

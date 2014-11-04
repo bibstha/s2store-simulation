@@ -1,10 +1,11 @@
+require_relative 'helper'
 require 'alias'
 
 module S2Eco
-  class Developer
-    attr_accessor :start_day
+  class Developer < Sequel::Model
+    one_to_many :services
+
     attr_accessor :productive_days
-    attr_accessor :dev_duration
 
     def self.active_state_picker
       @is_active_picker ||= begin
@@ -13,11 +14,12 @@ module S2Eco
       end
     end
 
-    def initialize(start_day_initial = 0)
-      @start_day = start_day_initial
-      @is_active = true
-      @productive_days = []
-      @dev_duration = rand_dev_duration
+    def initialize(*args)
+      super(*args)
+      self.create_day      ||= 0
+      self.is_active       ||= true
+      self.dev_duration    ||= rand_dev_duration
+      self.last_service_produced_day ||= self.create_day
     end
 
     # Support characteristic
@@ -28,22 +30,31 @@ module S2Eco
       @support_characteristic ||= rand(0..2)
     end
 
-    def receive_new_service(day)
-      days_taken = day - (productive_days.last || 0)
-      if days_taken >= dev_duration
-        productive_days << day
-        true
-      else
-        false
+    def produce_service(day, &blk)
+      self.last_service_produced_day = day
+      save
+      return yield
+    end
+
+    def self.service_ready_developers(day)
+      where(is_active: true).where('? - last_service_produced_day = dev_duration', day)
+    end
+
+    def self.inactive_developers
+      where(is_active: false)
+    end
+
+    def self.update_active_state
+      # devs_that_will_become_inactive = []
+      where(is_active: true).each do |dev|
+        dev_stays_active = active_state_picker.generate
+        # devs_that_will_become_inactive << dev.id unless dev_stays_active
+        unless dev_stays_active
+          dev.is_active = false
+          dev.save
+        end
       end
-    end
-
-    def is_active?
-      @is_active
-    end
-
-    def refresh_active_state
-      @is_active = self.class.active_state_picker.generate
+      
     end
 
     private
@@ -53,4 +64,5 @@ module S2Eco
     end
 
   end
+
 end

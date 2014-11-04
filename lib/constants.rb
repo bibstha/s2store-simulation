@@ -1,7 +1,7 @@
 module S2Eco
   # Total number of days to simulate
-  # DAYS_TOTAL   = 10
-  DAYS_TOTAL   = 100
+  DAYS_TOTAL   = 10
+  # DAYS_TOTAL   = 100
   # DAYS_TOTAL   = 360
   # DAYS_TOTAL = 1080
 
@@ -29,7 +29,7 @@ module S2Eco
   S_USER       = -0.0038
   D_USER       = -4.0
 
-  BRO_MIN, BRO_MAX = [1, 360]
+  BROWSE_RANGE = 1..360
 
   KEY_WRD_MAX  = 200
 
@@ -39,4 +39,6 @@ module S2Eco
   BUGGY_SIDE     = 7..9
 
   P_VOTER        = 0.2
+
+  TOP_NEW_SERVICES = 50
 end

@@ -2,12 +2,10 @@ require 'matrix'
 require 'alias'
 
 module S2Eco
-  class Grid
+  module Grid
 
-    attr_accessor :features
-
-    def fill
-      @features = Matrix.build(10, 10) { |row, col| rand_cell_value(row, col) }
+    def generate_grid
+      Matrix.build(10, 10) { |row, col| rand_cell_value(row, col) }
     end
 
     def rand_cell_value(row, col)
@@ -21,10 +19,15 @@ module S2Eco
       self.class.rand_picker
     end
 
-    def to_s
-      @features and @features.row_vectors.map do |vector|
-        vector.to_a.map { |x| x ? "1":"0" }.join(" ")
-      end.join("\n")
+    def grid
+      if self.grid_marshaled
+        @grid ||= Marshal.load(self.grid_marshaled)
+      end
+    end
+
+    def grid=(grid)
+      @grid = grid
+      self.grid_marshaled = Marshal.dump(@grid)
     end
 
     RandPickerNotFound = Class.new(StandardError)

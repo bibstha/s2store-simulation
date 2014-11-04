@@ -1,7 +1,11 @@
-require 'matrix'
+class Hello
+  def initialize
+    @a = "THIS IS A"
+  end
 
-x = lambda do |*a|
-  p a
+  def print_a
+    puts self.a
+  end
 end
 
-x.call(1, 2, 3)
+Hello.new.print_a

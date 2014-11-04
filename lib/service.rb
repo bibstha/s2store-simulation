@@ -1,18 +1,15 @@
 require_relative 'grid'
 
 module S2Eco
-  class Service < Grid
+  class Service < Sequel::Model
+    
+    many_to_one  :developer
+    one_to_many  :downloads
+    many_to_many :users, join_table: :downloads
 
-    @instances = 0
+    include Grid
 
-    def self.get_new_id
-      @instances += 1
-    end
-
-    attr_reader   :id
-    attr_accessor :developer
     attr_accessor :reputation
-    attr_accessor :download_count
     attr_reader   :votes
 
     def self.rand_picker
@@ -22,11 +19,18 @@ module S2Eco
       end
     end
 
-    def initialize
-      @id             = self.class.get_new_id
-      @reputation     = nil
-      @download_count = 0
-      @votes          = []
+    def initialize(*args)
+      super(*args)
+      self.grid = generate_grid
+    #   @id             = self.class.get_new_id
+    #   @reputation     = nil
+    #   @download_count = 0
+    #   @votes          = []
+    #   @create_day     = create_day
+    end
+
+    def download_count
+      users.count
     end
 
     def calculate_reputation
@@ -62,10 +66,6 @@ module S2Eco
     end
 
     def keyword_search
-    end
-
-    def ==(service)
-      @features = service.features
     end
 
   end

@@ -24,16 +24,35 @@ module S2Eco
 
     def test_download
       store = Store.new
-      user = User.new(0)
-      service = Service.new
+      users = [User.create, User.create]
+      service = Service.create
 
       assert_equal 0, service.download_count
-      store.download(service, user)
-      store.download(service, user)
+      store.download(service, users[0])
+      store.download(service, users[1])
 
       assert_equal 2, service.download_count
     end
 
-    # def test
+    def test_top_new_services
+      store = Store.new
+      [
+        Service.new.tap { |s| s.fill },
+        Service.new.tap { |s| s.fill },
+        Service.new.tap { |s| s.fill },
+        Service.new.tap { |s| s.fill }
+      ].each do |service|
+        store.upload_service(service)
+      end.tap do |services|
+        assert_equal services, store.top_new_services
+      end
+
+      1.upto(60).map { |day| Service.new(day) }.each do |service|
+        store.upload_service(service)
+      end.tap do |services|
+        assert_equal services.reverse[0, 50], store.top_new_services
+      end
+      
+    end
   end
 end

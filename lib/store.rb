@@ -2,13 +2,14 @@ module S2Eco
   class Store
 
     attr_reader :services
+    attr_reader :current_day
 
     def initialize
       @services = []
     end
 
-    def upload_service(service)
-      @services << service
+    def day=(day)
+      @current_day = day
     end
 
     def service_count
@@ -24,28 +25,22 @@ module S2Eco
     end
 
     def top_new_services
-      []
+      Service.reverse_order(:create_day).limit(TOP_NEW_SERVICES)
     end
 
     def top_best_services
       []
     end
 
-    # Return random number of services returned
+    # Return count = rand(1..KEY_WRD_MAX)
+    # Random rows from Service
     def keyword_search_services
-      total_services = @services.count
-      search_results_count = rand(1..KEY_WRD_MAX)
-      search_results_keys  = Array.new(search_results_count) { rand(0..(total_services-1)) }
-      
-      search_results_keys.map do |key|
-        @services[key]
-      end
-      
+      Service.order(Sequel.lit('RANDOM()')).limit(rand(1..KEY_WRD_MAX))
     end
 
     def download(service, user)
-      service.download_count += 1
-      user.install_service(service)
+      user.add_service(service)
+      user.save
     end
 
     def vote(service, user, amount)
