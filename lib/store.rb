@@ -40,11 +40,10 @@ module S2Eco
 
     def download(service, user)
       user.add_service(service)
-      user.save
     end
 
     def vote(service, user, amount)
-      user.voted_services[service] = amount
+      
       service.votes << amount
     end
   end

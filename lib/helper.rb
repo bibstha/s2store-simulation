@@ -49,8 +49,10 @@ def create_tables
     foreign_key :user_id, :users
     primary_key [:service_id, :user_id]
 
-    Integer     :vote
+    Integer     :vote, default: nil
   end
 end
 
 create_tables
+
+# DB.loggers << Logger.new($stdout)

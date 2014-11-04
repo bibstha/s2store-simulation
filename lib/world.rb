@@ -77,15 +77,16 @@ module S2Eco
     end
 
     def users_provide_feedback
-      User.ready_to_browse_on(@current_day).where(is_voter: true).each do |voter|
+      User.ready_to_browse_on(@current_day).where(is_voter: true).each do |user|
         
-        voter.unvoted_services.sample(unvoted_services.size * 0.1).each do |service|
-          if service.is_malicious?
-            S2STORE.vote(service, voter, 1)
-          elsif service.is_buggy?
-            S2STORE.vote(service, voter, rand(2..3))
+        dls_to_vote = (user.unvoted_downloads.count * 0.1).ceil
+        user.unvoted_downloads.order(Sequel.lit('RANDOM()')).limit(dls_to_vote).each do |dl|
+          if dl.service.is_malicious?
+            dl.update(vote: 1)
+          elsif dl.service.is_buggy?
+            dl.update(vote: rand(2..3))
           else
-            S2STORE.vote(service, voter, rand(3..5))
+            dl.update(vote: rand(3..5))
           end
         end
 
@@ -161,11 +162,14 @@ if __FILE__ == $0
   analyser = StatsAnalyser.new(S2STORE, world)
 
   world.add_before_start_day_listener do |day|
-    ap "Start day #{day.to_s.ljust(4)}: Services: #{Service.count.to_s.ljust(5)}, " \
-      "Developers: #{Developer.count.to_s.ljust(5)} "\
+    ap "Start day #{day.to_s.ljust(4)}: Services: #{Service.count.to_s.ljust(5)}, "
+
+    ap "      Developers: #{Developer.count.to_s.ljust(5)} "\
       "(Inactive: #{Developer.inactive_developers.count.to_s.ljust(5)}, " \
       "Ready: #{Developer.service_ready_developers(day + 1).count.to_s.ljust(5)})"
-    ap "    Users - Total: #{User.count.to_s.ljust(5)}, ReadyToBrowse: #{User.ready_to_browse_on(day).count}"
+    
+    ap "      Users - Total: #{User.count.to_s.ljust(5)}, ReadyToBrowse: #{User.ready_to_browse_on(day).count}, "
+
   end
 
   world.add_after_start_day_listener do |day|

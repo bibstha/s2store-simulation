@@ -72,8 +72,8 @@ module S2Eco
       end
     end
 
-    def unvoted_services
-      services.where('services_users.vote is NULL')
+    def unvoted_downloads
+      Download.where(user_id: id, vote: nil)
     end
 
     def rand_cell_value(row, col)
