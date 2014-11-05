@@ -12,7 +12,7 @@ module S2Eco
     attr_accessor :reputation
     attr_reader   :votes
 
-    def self.rand_picker
+    def self.grid_rand_picker
       @rand_picker ||= begin
         p_values = [P_FEAT_S, 1 - P_FEAT_S]
         AliasTable.new([true, false], p_values)
@@ -41,7 +41,7 @@ module S2Eco
       @is_malicious ||= begin
         MALICIOUS_SIDE.each do |r|
           MALICIOUS_SIDE.each do |c|
-            return true if @features[r, c]
+            return true if grid[r, c]
           end
         end
         false
@@ -52,7 +52,7 @@ module S2Eco
       @is_buggy ||= begin
         BUGGY_SIDE.each do |r|
           BUGGY_SIDE.each do |c|
-            return true if @features[r, c]
+            return true if grid[r, c]
           end
         end
         false

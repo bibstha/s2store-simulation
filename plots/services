@@ -1,0 +1,4 @@
+plot "../logs/service_count_daily" using 1:2 title "Total Services" with lines, \
+  "../logs/service_count_daily" using 1:3 title "Total Votes" with lines, \
+  "../logs/service_count_daily" using 1:4 title "Total Voted Services" with lines
+pause -1 "Hit any key to continue"

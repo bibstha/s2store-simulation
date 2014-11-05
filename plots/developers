@@ -1,0 +1,2 @@
+plot "../logs/developer_count_2" using 1:2 title "Total Developers" with lines
+pause -1 "Hit any key to continue"

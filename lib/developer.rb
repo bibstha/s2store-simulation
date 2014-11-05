@@ -45,16 +45,12 @@ module S2Eco
     end
 
     def self.update_active_state
-      # devs_that_will_become_inactive = []
+      devs_that_will_become_inactive = []
       where(is_active: true).each do |dev|
         dev_stays_active = active_state_picker.generate
-        # devs_that_will_become_inactive << dev.id unless dev_stays_active
-        unless dev_stays_active
-          dev.is_active = false
-          dev.save
-        end
+        devs_that_will_become_inactive << dev.id unless dev_stays_active
       end
-      
+      Developer.where(id: devs_that_will_become_inactive).update(is_active: false)
     end
 
     private

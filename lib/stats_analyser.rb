@@ -1,3 +1,5 @@
+require_relative 'download'
+
 module S2Eco
   class StatsAnalyser
 
@@ -61,5 +63,16 @@ module S2Eco
         log([day, data].flatten, "periodic_service_ranking")
       end
     end
+
+    def daily_analysis_on(day)
+
+      # Vote Distribution
+      average_votes = Download.select(:service_id){round(avg(vote)).as(vote)}
+      .exclude(:vote => nil).group(:service_id).all
+      vote_count = average_votes.group_by{ |dl| dl[:vote] }.map{|k,v| [k.to_i, v.count]}.to_h
+      
+      vote_sorted = [1,2,3,4,5].map { |k| vote_count[k] || 0 }
+      log([day] + vote_sorted, "vote_distribution_daily")
+    end   
   end
 end

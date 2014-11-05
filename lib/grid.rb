@@ -9,14 +9,14 @@ module S2Eco
     end
 
     def rand_cell_value(row, col)
-      rand_picker.generate
+      grid_rand_picker.generate
     end
 
-    def rand_picker
-      unless self.class.respond_to?(:rand_picker)
+    def grid_rand_picker
+      unless self.class.respond_to?(:grid_rand_picker)
         raise RandPickerNotFound, "#{self.class} must implement class method rand_picker"
       end
-      self.class.rand_picker
+      self.class.grid_rand_picker
     end
 
     def grid

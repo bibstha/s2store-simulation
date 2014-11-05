@@ -13,7 +13,7 @@ module S2Eco
     attr_reader :installed_services
     attr_reader :voted_services
 
-    def self.rand_picker
+    def self.grid_rand_picker
       @rand_picker ||= begin
         p_values = [P_PREF_USER, 1 - P_PREF_USER]
         AliasTable.new([true, false], p_values)
@@ -92,8 +92,8 @@ module S2Eco
     #   @installed_services.include?(service)
     # end
 
-    def is_voter?
-      @voter
+    def self.voters
+      where(is_voter: true)
     end
 
     def self.ready_to_browse_on(day)

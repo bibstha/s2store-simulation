@@ -1,11 +1,24 @@
-class Hello
-  def initialize
-    @a = "THIS IS A"
-  end
+require 'matrix'
+require 'benchmark'
 
-  def print_a
-    puts self.a
+
+GRID = Matrix.build(10, 10) { [true, false].sample }
+MALICIOUS_SIDE = 0..2
+
+is_malicious = lambda do
+  MALICIOUS_SIDE.each do |r|
+    MALICIOUS_SIDE.each do |c|
+      if GRID[r, c]
+        "HELLO"
+      end
+    end
   end
 end
 
-Hello.new.print_a
+Benchmark.bm do |x|
+  x.report do
+    1_000_000.times do
+      is_malicious.call
+    end
+  end
+end

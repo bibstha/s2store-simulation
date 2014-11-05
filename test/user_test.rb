@@ -94,16 +94,15 @@ module S2Eco
     def test_unvoted_services
       user = User.create
       services = [
-        Service.create,
-        Service.create,
-        Service.create,
-        Service.create
+        Service.create(name: "A"),
+        Service.create(name: "B"),
+        Service.create(name: "C"),
+        Service.create(name: "D")
       ]
       services.each { |s| user.add_service(s) }
-
-      user.unvoted_services.each do |unvoted_service|
-        services.include? unvoted_service
-      end
+      user.downloads{|d| d.where(service_id: services[1].id)}.first.update(vote: 3)
+      
+      assert_equal %w[A C D], user.unvoted_services.map(&:name)
     end
   end
 end

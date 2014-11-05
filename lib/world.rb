@@ -2,6 +2,7 @@ require_relative 'helper'
 require_relative 'developer'
 require_relative 'service'
 require_relative 'user'
+require_relative 'stats_analyser'
 require 'set'
 
 module S2Eco
@@ -33,8 +34,6 @@ module S2Eco
 
     def start
       increase_agent_population
-
-      # 1.upto(5).each do |day|
       1.upto(DAYS_TOTAL).each do |day|
         @before_start_day_listener.each{|l| l.call(day)}
 
@@ -51,7 +50,7 @@ module S2Eco
       
       increase_entities
       users_download_services
-      # users_provide_feedback
+      users_provide_feedback
       # calculate_system_rankings
       increase_agent_population
 
@@ -79,14 +78,17 @@ module S2Eco
     def users_provide_feedback
       User.ready_to_browse_on(@current_day).where(is_voter: true).each do |user|
         
-        dls_to_vote = (user.unvoted_downloads.count * 0.1).ceil
-        user.unvoted_downloads.order(Sequel.lit('RANDOM()')).limit(dls_to_vote).each do |dl|
-          if dl.service.is_malicious?
-            dl.update(vote: 1)
-          elsif dl.service.is_buggy?
-            dl.update(vote: rand(2..3))
-          else
-            dl.update(vote: rand(3..5))
+        dls_to_vote = (user.unvoted_downloads.count * P_APPS_TO_VOTE).ceil
+        # ap "Unvoted Downloads #{dls_to_vote}"
+        if dls_to_vote > 0
+          user.unvoted_downloads.order(Sequel.lit('RANDOM()')).limit(dls_to_vote).each do |dl|
+            if dl.service.is_malicious?
+              dl.update(vote: 1)
+            elsif dl.service.is_buggy?
+              dl.update(vote: rand(2..3))
+            else
+              dl.update(vote: rand(1..5))
+            end
           end
         end
 
@@ -156,24 +158,30 @@ end
 if __FILE__ == $0
 
   include S2Eco
-  reset_logs %w[dev_count service_count download_count_items download_count_fd votes_data periodic_service_ranking]
+  # reset_logs %w[dev_count service_count download_count_items download_count_fd votes_data periodic_service_ranking service_count_2]
+  reset_logs %w[service_count_daily developer_count_daily user_count_daily vote_distribution_daily]
   
   world = World.new
   analyser = StatsAnalyser.new(S2STORE, world)
 
   world.add_before_start_day_listener do |day|
-    ap "Start day #{day.to_s.ljust(4)}: Services: #{Service.count.to_s.ljust(5)}, "
+    ap "Start Day: #{day}"
+    # ap "Start day #{day.to_s.ljust(4)}: Services: #{Service.count.to_s.ljust(5)}, "
 
-    ap "      Developers: #{Developer.count.to_s.ljust(5)} "\
-      "(Inactive: #{Developer.inactive_developers.count.to_s.ljust(5)}, " \
-      "Ready: #{Developer.service_ready_developers(day + 1).count.to_s.ljust(5)})"
+    # ap "      Developers: #{Developer.count.to_s.ljust(5)} "\
+    #   "(Inactive: #{Developer.inactive_developers.count.to_s.ljust(5)}, " \
+    #   "Ready: #{Developer.service_ready_developers(day + 1).count.to_s.ljust(5)})"
     
-    ap "      Users - Total: #{User.count.to_s.ljust(5)}, ReadyToBrowse: #{User.ready_to_browse_on(day).count}, "
-
+    # ap "      Users - Total: #{User.count.to_s.ljust(5)}, ReadyToBrowse: #{User.ready_to_browse_on(day).count}, "
   end
 
-  world.add_after_start_day_listener do |day|
-    
+  world.add_before_start_day_listener do |day|
+    analyser.daily_analysis_on(day)
+    log([day, Service.count, Download.vote_count, Download.voted_service_count], "service_count_daily")
+    log([day, Developer.count, Developer.inactive_developers.count, Developer.service_ready_developers(day)], 
+      "developer_count_daily")
+    log([day, User.count, User.voters.count], "user_count_daily")
+    # log([day, Download.count], "vote_count_daily")
   end
 
   world.start 
