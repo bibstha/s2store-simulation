@@ -48,6 +48,7 @@ module S2Eco
     def start_day
       # malicious_service_count = S2STORE.malicious_service_count
       
+      S2STORE.current_day = @current_day
       increase_entities
       users_download_services
       users_provide_feedback
@@ -82,12 +83,13 @@ module S2Eco
         # ap "Unvoted Downloads #{dls_to_vote}"
         if dls_to_vote > 0
           user.unvoted_downloads.order(Sequel.lit('RANDOM()')).limit(dls_to_vote).each do |dl|
-            if dl.service.is_malicious?
-              dl.update(vote: 1)
-            elsif dl.service.is_buggy?
-              dl.update(vote: rand(2..3))
+            # if dl.service.is_malicious?
+              # dl.update(vote: 1)
+            # elsif dl.service.is_buggy?
+            if dl.service.is_buggy?
+              dl.update(vote: rand(1..2))
             else
-              dl.update(vote: rand(1..5))
+              dl.update(vote: rand(3..5))
             end
           end
         end
@@ -140,12 +142,34 @@ module S2Eco
     end
 
     def increase_services(developers)
+      rework_existing_services(developers)
       services = developers.map do |dev|
         dev.produce_service(@current_day) do 
           Service.new(create_day: @current_day, developer: dev)
         end
       end
       Service.multi_insert(services)
+    end
+
+    # Make existing developers rework their applications
+    def rework_existing_services(developers)
+      dev_groups = developers.all.group_by(&:dev_type)
+      ap "Improvers: #{dev_groups[0].count}, Ignorers: #{dev_groups[1].count}, Improvers: #{dev_groups[2].count}"
+
+      # 0: Improvers
+      dev_groups[0].each do |developer|
+        developer.services.each do |service| 
+          service.fix_bug!
+        end
+      end
+      # 1: Ignorers
+      # do nothing
+      # 2: Malicious
+      dev_groups[2].each do |developer|
+        developer.services.each do |service|
+          service.introduce_bug!
+        end
+      end
     end
 
     def increase_day
@@ -177,10 +201,10 @@ if __FILE__ == $0
 
   world.add_before_start_day_listener do |day|
     analyser.daily_analysis_on(day)
-    log([day, Service.count, Download.vote_count, Download.voted_service_count], "service_count_daily")
+    # log([day, Service.count, Download.vote_count, Download.voted_service_count], "service_count_daily")
     log([day, Developer.count, Developer.inactive_developers.count, Developer.service_ready_developers(day)], 
       "developer_count_daily")
-    log([day, User.count, User.voters.count], "user_count_daily")
+    # log([day, User.count, User.voters.count], "user_count_daily")
     # log([day, Download.count], "vote_count_daily")
   end
 

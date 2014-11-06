@@ -4,3 +4,4 @@ gem "minitest"
 gem 'aliastable'
 gem 'sequel', '~> 4.16.0'
 gem 'awesome_print'
+# gem 'nmatrix'

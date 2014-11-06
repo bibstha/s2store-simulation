@@ -54,5 +54,49 @@ module S2Eco
       end
       
     end
+
+    def test_top_best_services
+      skip
+      store = Store.new
+      store.current_day = 1
+
+      services = 20.times.map { Service.create }
+      users = 5.times.map { User.create }
+
+      store.download(services[0], users[0])
+      store.download(services[1], users[0])
+
+      store.current_day = 2
+      store.download(services[1], users[1])
+      store.download(services[1], users[2])
+      store.download(services[2], users[1])
+      store.download(services[3], users[1])
+      
+
+      store.current_day = 3
+      store.download(services[2], users[2])
+      store.download(services[3], users[2])
+      store.download(services[4], users[2])
+      store.download(services[5], users[2])
+
+      store.current_day = 4
+      # 8*D1 + 5*D2 + 5*D3 + 3*D4
+      # S0 = 0 + 0 + 5 + 0 = 5
+      # S1 = 0 + 10 + 5 + 0 = 15
+      # S2 = 8 + 5 = 13
+      # S3 = 8 + 5 = 13
+      # S4 = 8
+      # S5 = 8
+
+      best_services = store.top_best_services
+
+      assert_equal services[1], best_services[0]
+      assert_equal services[2], best_services[1]
+      assert_equal services[3], best_services[2]
+      assert_equal services[4], best_services[3]
+      assert_equal services[5], best_services[4]
+      assert_equal services[0], best_services[5]
+    end
+
   end
 end

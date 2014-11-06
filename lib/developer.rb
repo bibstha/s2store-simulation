@@ -19,6 +19,7 @@ module S2Eco
       self.create_day      ||= 0
       self.is_active       ||= true
       self.dev_duration    ||= rand_dev_duration
+      self.dev_type        ||= rand(3) # between 0 and 2 inclusive
       self.last_service_produced_day ||= self.create_day
     end
 

@@ -57,5 +57,47 @@ module S2Eco
       assert_equal 2, Service[1].download_count
     end
 
+    def test_is_malicious?
+      grid = Matrix.build(10, 10) { false }
+      grid[8, 8] = true
+      service = Service.new(grid: grid)
+      assert service.grid_marshaled
+      assert_equal grid, service.grid
+      assert_equal false, service.is_malicious?
+
+      grid2 = grid.dup
+      grid2[0, 0] = true
+      service2 = Service.new(grid: grid2)
+      assert service.is_malicious?
+    end
+
+    def test_is_buggy?
+      grid = Matrix.build(10, 10) { false }
+      service = Service.new(grid: grid)
+      assert service.grid_marshaled
+      assert_equal false, service.is_buggy?
+
+      grid2 = grid.dup
+      grid2[9, 9] = true
+      service.grid = grid2
+      assert service.is_buggy?
+    end
+
+    def test_introduce_bug!
+      grid = Matrix.build(10, 10) { false }
+      service = Service.create(grid: grid)
+      
+      assert_equal false, service.is_buggy?
+      service.introduce_bug!
+      assert service.is_buggy?
+    end
+
+    def test_fix_bug!
+      service = Service.create
+      service.introduce_bug!
+      assert_equal true,  service.is_buggy?
+      service.fix_bug!
+      assert_equal false, service.is_buggy?
+    end
   end
 end

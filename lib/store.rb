@@ -1,15 +1,14 @@
+require_relative 'download'
+
 module S2Eco
   class Store
 
     attr_reader :services
-    attr_reader :current_day
+    attr_accessor :current_day
 
     def initialize
       @services = []
-    end
-
-    def day=(day)
-      @current_day = day
+      @cache    = {}
     end
 
     def service_count
@@ -29,7 +28,28 @@ module S2Eco
     end
 
     def top_best_services
-      []
+      unless @cache[:top_best_services_day] == current_day
+        @cache[:top_best_services_day] = current_day
+        weight_query = lambda do |value, day|
+          Download.select(:service_id){(count(:service_id) * value).as("weight")}.where('create_day = ?', day).group(:service_id).to_a
+        end
+        
+        all = []
+        # D1
+        all.push *weight_query.call(8, current_day - 1)
+        all.push *weight_query.call(5, current_day - 2)
+        all.push *weight_query.call(5, current_day - 3)
+        all.push *weight_query.call(3, current_day - 4)
+
+        service_weights = Hash.new(0)
+        all.each do |download| 
+          service_weights[ download[:service_id] ] += download[:weight]
+        end
+
+        service_ids = service_weights.to_a.sort_by(&:last).reverse[0..TOP_BEST_SERVICES].map(&:first)
+        @top_best_services = Service.where(id: service_ids).all
+      end
+      @top_best_services
     end
 
     # Return count = rand(1..KEY_WRD_MAX)
@@ -39,12 +59,7 @@ module S2Eco
     end
 
     def download(service, user)
-      user.add_service(service)
-    end
-
-    def vote(service, user, amount)
-      
-      service.votes << amount
+      Download.create(service: service, user: user, create_day: current_day)
     end
   end
 end

@@ -1,8 +1,8 @@
 module S2Eco
   # Total number of days to simulate
   # DAYS_TOTAL   = 10
-  DAYS_TOTAL   = 40
-  # DAYS_TOTAL   = 100
+  # DAYS_TOTAL   = 40
+  DAYS_TOTAL   = 100
   # DAYS_TOTAL   = 360
   # DAYS_TOTAL = 1080
 
@@ -36,11 +36,12 @@ module S2Eco
 
   U_AVOID_SIZE = 3
 
-  MALICIOUS_SIDE = 0..1
-  BUGGY_SIDE     = 7..9
+  # MALICIOUS_SIDE = 0..3
+  BUGGY_SIDE     = 6..9
 
   P_VOTER        = 0.2
   P_APPS_TO_VOTE = 0.5
 
-  TOP_NEW_SERVICES = 50
+  TOP_NEW_SERVICES  = 50
+  TOP_BEST_SERVICES = 50
 end

@@ -30,6 +30,11 @@ module S2Eco
       self.grid_marshaled = Marshal.dump(@grid)
     end
 
+    def set_value(x, y, value)
+      @grid[x, y] = value
+      self.grid_marshaled = Marshal.dump(@grid)
+    end
+
     RandPickerNotFound = Class.new(StandardError)
   end
 end

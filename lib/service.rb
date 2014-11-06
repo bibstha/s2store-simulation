@@ -21,7 +21,7 @@ module S2Eco
 
     def initialize(*args)
       super(*args)
-      self.grid = generate_grid
+      self.grid ||= generate_grid
     #   @id             = self.class.get_new_id
     #   @reputation     = nil
     #   @download_count = 0
@@ -57,6 +57,25 @@ module S2Eco
         end
         false
       end   
+    end
+
+    def fix_bug!
+      if is_buggy?
+        bugs = []
+        BUGGY_SIDE.each do |r|
+          BUGGY_SIDE.each do |c|
+            set_value(r, c, false) if grid[r, c]
+          end
+        end
+        save
+      end
+    end
+
+    def introduce_bug!
+      unless is_buggy?
+        set_value(rand(BUGGY_SIDE), rand(BUGGY_SIDE), true)
+        save
+      end
     end
 
     def top_services
