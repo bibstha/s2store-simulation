@@ -1,4 +1,5 @@
 require_relative 'helper'
+require_relative 'device'
 require_relative 'developer'
 require_relative 'service'
 require_relative 'user'
@@ -13,12 +14,7 @@ module S2Eco
 
     def initialize
       @current_day   = 0
-      @developers    = []
-      @users         = []
       @inactive_devs = []
-
-      @active_user_day_cache = 0
-      @active_users_today = []
 
       @before_start_day_listener = []
       @after_start_day_listener = []
@@ -32,8 +28,26 @@ module S2Eco
       @after_start_day_listener << blk
     end
 
+    # total population on @current_day
+    def pop_t_dev
+      POP_MIN_DEV + (POP_MAX_DEV - POP_MIN_DEV) / (1 + Math.exp(S_DEV * @current_day - D_DEV))
+    end
+
+    # total devices population on @current_day
+    def pop_t_devices
+      POP_MIN_DEVICES + (POP_MAX_DEVICES - POP_MIN_DEVICES) / (1 + Math.exp(S_DEVICES * @current_day - D_DEVICES))
+    end
+
+    # probability of a service to have x devices on @current_day
+    def p_t_device_per_service
+      (P_SERVICE_DEVICE_MIN + P_M * @current_day).to_i
+    end
+
     def start
-      increase_agent_population
+      # 0th day
+      increase_developer_population
+
+      # 1 to DAYS_TOTAL
       1.upto(DAYS_TOTAL).each do |day|
         @before_start_day_listener.each{|l| l.call(day)}
 
@@ -44,69 +58,32 @@ module S2Eco
       end
     end
 
-    # always starts with the 1st day, no 0th day
     def start_day
-      # malicious_service_count = S2STORE.malicious_service_count
-      
       S2STORE.current_day = @current_day
       increase_entities
-      users_download_services
-      users_provide_feedback
-      # calculate_system_rankings
-      increase_agent_population
+      calculate_system_rankings
+      increase_developer_population
 
     end
 
     def increase_entities
+      increase_devices
       service_ready_developers = Developer.service_ready_developers(@current_day)
       increase_services(service_ready_developers)
     end
 
-    def users_download_services
-      User.ready_to_browse_on(@current_day).each do |u|
-        
-        services = Set.new
-        services.merge(S2STORE.top_new_services.all)
-        services.merge(S2STORE.keyword_search_services.all)
-        services.merge(S2STORE.top_best_services)
-
-        u.select_interested_services(services).each do |interested_service|
-          S2STORE.download(interested_service, u)
-        end
-      end
-    end
-
-    def users_provide_feedback
-      User.ready_to_browse_on(@current_day).where(is_voter: true).each do |user|
-        
-        dls_to_vote = (user.unvoted_downloads.count * P_APPS_TO_VOTE).ceil
-        # ap "Unvoted Downloads #{dls_to_vote}"
-        if dls_to_vote > 0
-          user.unvoted_downloads.order(Sequel.lit('RANDOM()')).limit(dls_to_vote).each do |dl|
-            # if dl.service.is_malicious?
-              # dl.update(vote: 1)
-            # elsif dl.service.is_buggy?
-            if dl.service.is_buggy?
-              dl.update(vote: rand(1..2))
-            else
-              dl.update(vote: rand(3..5))
-            end
-          end
-        end
-
-      end
+    def increase_devices
+      device_count_yesterday = Device.count
+      required_device_count  = pop_t_devices
+      new_devices_count = required_device_count - device_count_yesterday
+      new_devices = Array.new(new_devices_count) { Device.new(create_day: @current_day) }
+      Device.multi_insert(new_devices)
     end
 
     def calculate_system_rankings
-      S2STORE.services.each(&:calculate_reputation)
+      S2STORE.calculate_system_rankings
     end
 
-    def increase_agent_population
-      increase_developer_population
-      increase_user_population
-    end
-
-    
     def increase_developer_population
       # 1. Make some users inactive
       Developer.update_active_state
@@ -120,56 +97,22 @@ module S2Eco
       Developer.multi_insert(new_developers)
     end
 
-    def pop_t_dev
-      POP_MIN_DEV + (POP_MAX_DEV - POP_MIN_DEV) / (1 + Math.exp(S_DEV * @current_day - D_DEV))
-    end
-
-    def increase_user_population
-      users_total_size     = pop_t_user.ceil
-      users_yesterday_size = User.count
-      users_new_required   = users_total_size - users_yesterday_size
-
-      new_users = Array.new(users_new_required) { User.new(create_day: @current_day) }
-      User.multi_insert(new_users)
-    end
-
-    def pop_t_user
-      POP_MIN_USER + (POP_MAX_USER - POP_MIN_USER) / (1 + Math.exp(S_USER * @current_day - D_USER))
-    end
-
-    # We don't start with any entities
-    def increase_entities_population
-    end
-
     def increase_services(developers)
-      rework_existing_services(developers)
+      # rework_existing_services(developers)
       services = developers.map do |dev|
         dev.produce_service(@current_day) do 
-          Service.new(create_day: @current_day, developer: dev)
+          total_devices_per_service = rand(1..p_t_device_per_service)
+          S2STORE.create_service(create_day: @current_day, developer: dev, 
+            device_count: total_devices_per_service)
+          # ap "Total: #{p_t_device_per_service} : #{total_devices_per_service}"
         end
       end
-      Service.multi_insert(services)
+      # Service.multi_insert(services)
     end
 
     # Make existing developers rework their applications
     def rework_existing_services(developers)
-      dev_groups = developers.all.group_by(&:dev_type)
-      ap "Improvers: #{dev_groups[0].count}, Ignorers: #{dev_groups[1].count}, Improvers: #{dev_groups[2].count}"
-
-      # 0: Improvers
-      dev_groups[0].each do |developer|
-        developer.services.each do |service| 
-          service.fix_bug!
-        end
-      end
-      # 1: Ignorers
-      # do nothing
-      # 2: Malicious
-      dev_groups[2].each do |developer|
-        developer.services.each do |service|
-          service.introduce_bug!
-        end
-      end
+      # dev_groups = developers.all.group_by(&:dev_type)
     end
 
     def increase_day
@@ -201,14 +144,17 @@ if __FILE__ == $0
 
   world.add_before_start_day_listener do |day|
     analyser.daily_analysis_on(day)
+    # p "Total Services: #{Service.count}, Devs: #{Developer.count}"
+    p "Total Services: #{Service.count}, Devices: #{Device.count}, CM: #{ContextModel.count}"
     # log([day, Service.count, Download.vote_count, Download.voted_service_count], "service_count_daily")
-    log([day, Developer.count, Developer.inactive_developers.count, Developer.service_ready_developers(day)], 
-      "developer_count_daily")
+    # log([day, Developer.count, Developer.inactive_developers.count, Developer.service_ready_developers(day)], 
+      # "developer_count_daily")
+    # log([day, Device.count], "device_count")
     # log([day, User.count, User.voters.count], "user_count_daily")
     # log([day, Download.count], "vote_count_daily")
   end
 
   world.start 
-  # analyser.analyse
+  analyser.final_analysis_on
   
 end

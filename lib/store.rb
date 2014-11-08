@@ -1,4 +1,5 @@
 require_relative 'download'
+require_relative 'context_model'
 
 module S2Eco
   class Store
@@ -11,55 +12,46 @@ module S2Eco
       @cache    = {}
     end
 
-    def service_count
-      @services.count
-    end
+    def create_service(opt)
+      create_day = opt.fetch(:create_day)
+      developer  = opt.fetch(:developer)
+      device_count = opt.fetch(:device_count)
+      
+      service = Service.create(create_day: create_day, developer: developer, device_count: device_count)
 
-    def malicious_service_count
-      @services.count { |s| s.is_malicious? }
-    end
-
-    def group_duplicate_services
-      @services.group_by { |s| s }
-    end
-
-    def top_new_services
-      Service.reverse_order(:create_day).limit(TOP_NEW_SERVICES)
-    end
-
-    def top_best_services
-      unless @cache[:top_best_services_day] == current_day
-        @cache[:top_best_services_day] = current_day
-        weight_query = lambda do |value, day|
-          Download.select(:service_id){(count(:service_id) * value).as("weight")}.where('create_day = ?', day).group(:service_id).to_a
-        end
-        
-        all = []
-        # D1
-        all.push *weight_query.call(8, current_day - 1)
-        all.push *weight_query.call(5, current_day - 2)
-        all.push *weight_query.call(5, current_day - 3)
-        all.push *weight_query.call(3, current_day - 4)
-
-        service_weights = Hash.new(0)
-        all.each do |download| 
-          service_weights[ download[:service_id] ] += download[:weight]
-        end
-
-        service_ids = service_weights.to_a.sort_by(&:last).reverse[0..TOP_BEST_SERVICES].map(&:first)
-        @top_best_services = Service.where(id: service_ids).all
+      device_ids = (1..Device.count).to_a.sample(device_count)
+      device_ids.each do |device_id|
+        cm = developer_chooses_context_model(device_id)
+        cm.reputation += 1
+        cm.save
+        service.add_context_model(cm)
       end
-      @top_best_services
+
+      service
     end
 
-    # Return count = rand(1..KEY_WRD_MAX)
-    # Random rows from Service
-    def keyword_search_services
-      Service.order(Sequel.lit('RANDOM()')).limit(rand(1..KEY_WRD_MAX))
+    # Where the MAGIC happens
+    def developer_chooses_context_model(device_id)
+      # use_existing_context_model = [true, true, true, true, true, true, false].sample
+      use_existing_context_model = [ [true] * 10, false ].flatten.sample
+      cm = if use_existing_context_model
+        get_context_models_for(device_id)
+      end
+      cm = ContextModel.create(device_id: device_id) unless cm
+      cm
     end
 
-    def download(service, user)
-      Download.create(service: service, user: user, create_day: current_day)
+    def get_context_models_for(device_id)
+      cms = ContextModel.where(device_id: device_id).reverse_order(:reputation).limit(10)
+      cms_array = []
+      cms.each do |context_model|
+        context_model.reputation.times { cms_array << context_model }
+      end
+      cms_array.sample
+    end
+
+    def calculate_system_rankings
+      # do nothing, reputations are already added by create_service
     end
   end
 end

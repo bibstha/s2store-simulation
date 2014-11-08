@@ -3,6 +3,7 @@ APP_ENV = 'dev' unless defined?(APP_ENV)
 require 'sequel'
 require 'logger'
 require 'awesome_print'
+require 'descriptive_statistics'
 require_relative 'constants'
 require_relative 'log'
 require_relative 'monkey_patches'

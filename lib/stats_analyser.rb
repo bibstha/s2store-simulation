@@ -1,3 +1,4 @@
+require 'json'
 require_relative 'download'
 
 module S2Eco
@@ -6,96 +7,68 @@ module S2Eco
     def initialize(store, world)
       @store = store
       @world = world
-    end
 
-    def analyse
-      # log_download_count_items
-      # log_download_count_frequency_distribution
-      # log_malicious_app_count
-      log_service_total_votes
-    end
-
-    def periodic_analyse(day)
-      log_periodic_service_ranking(day)
-    end
-
-    def log_download_count_items
-      @store.services.group_by(&:download_count).map {|k, v| [k, v.map(&:id)]}
-      .sort_by{ |k, v| k }.each do | download_count |
-        log(download_count, "download_count_items")
-      end
-    end
-
-    def log_download_count_frequency_distribution
-      @store.services.group_by(&:download_count).map{|k,v| [k, v.size]}
-      .sort.each do | download_count |
-        log(download_count, "download_count_fd")
-      end
-    end
-
-    def log_malicious_app_count
-      log(@store.services.count(&:is_malicious?), "malicious_count")
-      log(@store.services.count(&:is_buggy?), "buggy_count")
-    end
-
-    def log_service_total_votes
-      voted_services = @world.users.collect{ |u| u.voted_services.to_a }.flatten(1)
-      
-      voted_services_grouped = voted_services.group_by(&:first).map{|k,v| [k, v.map{|s,vote| vote}]}.sort_by{|k,v| v.size}
-      .to_h
-      
-      p voted_services_grouped.first
-      voted_services_grouped.each_with_index do |(service, votes), index|
-        log([index, votes.size, votes.inject(:+).to_f / votes.size], "votes_data")
-      end
-      # p @world.users.first.voted_services
-      # .flatten(1).group_by(&:first)
-      # .tap do |service_detail|
-      #   p service_detail.first.id
-      #   p service_detail[1].size
-      # end
-    end
-
-    #periodic functions
-    def log_periodic_service_ranking(day)
-      @store.services.select(&:reputation).group_by(&:reputation)
-      .map{|rep, services| [rep, services.size]}.each do |data|
-        log([day, data].flatten, "periodic_service_ranking")
-      end
+      reset_logs(["context_model_count", "n_d_d_daily"])
     end
 
     def daily_analysis_on(day)
+      # Ranking Distribution
+        # ap ContextModel.group_and_count(:reputation).map {|res| {res[:reputation] => res[:count]} }
 
-      # Vote Distribution
-      # average_votes = Download.select(:service_id){round(avg(vote)).as(vote)}
-      # .exclude(:vote => nil).group(:service_id).all
-      # vote_count = average_votes.group_by{ |dl| dl[:vote] }.map{|k,v| [k.to_i, v.count]}.to_h
-      
-      # vote_sorted = [1,2,3,4,5].map { |k| vote_count[k] || 0 }
-      # log([day] + vote_sorted, "vote_distribution_daily")
-
-      # Improvers
-      vote_count = lambda do |dev_type|
-
-        services = Service.eager_graph(:developer).where(developer__dev_type: dev_type)
-          .select_map(:services__id)
-
-        service_avg_votes = Download.select(:service_id){round(avg(vote)).as(avg_vote)}
-          .where(service_id: services).exclude(vote: nil)
-          .group(:service_id).to_hash(:service_id, :avg_vote)
-      
-        votes = Array.new(5, 0)
-        service_avg_votes.each { |service_id, avg_vote| votes[avg_vote.to_i - 1] += 1 }
-
-        votes
+      # Normalized Degree Distribution
+      # Device.eager_graph(:context_models).all do |d|
+      normalized_degree_distribution = Array.new(11, 0)
+      Device.eager(:context_models).all.each do |d|
+        # p d.context_models.map(&:reputation).normalize!
+        d.context_models.map(&:reputation).normalize!.each do |n|
+          normalized_degree_distribution[n] += 1
+        end
       end
-      
-      # 0: Innovator
-      log([day, 0] + vote_count.call(0), "vote_distribution_daily")
-      # 1: Ignorer
-      log([day, 1] + vote_count.call(1), "vote_distribution_daily")
-      # 2: Malicious
-      log([day, 2] + vote_count.call(2), "vote_distribution_daily")
+
+      log([day] + normalized_degree_distribution, "n_d_d_daily")
+
+      if day % 50 == 0
+        dump_graph(day)
+      end
     end   
+
+    def final_analysis_on
+      # Standard deviation of number of context models per device
+      
+      context_models_per_device_count = Hash.new(0)
+
+      Device.eager(:context_models).all.each do |device|
+        context_models_per_device_count[ device.id ] += device.context_models.count
+      end
+
+      ap context_models_per_device_count.values.standard_deviation
+      context_models_per_device_count.values.each_with_index do |val, i|
+        log([i, val], "context_model_count")
+      end
+
+    end
+
+    def dump_graph(day)
+      nodes = []
+      edges = []
+      Device.eager(:context_models).all.each do |d|
+        nodes << { id: "d#{d.id}", size: d.context_models.count, color: "#F00" }
+        d.context_models.each do |cm|
+          nodes << { id: "n#{cm.id}", size: cm.reputation, color: "#0F0" }
+          edges << { id: "c2d#{cm.id}", source: "n#{cm.id}", target: "d#{d.id}"}
+        end
+      end
+
+      Service.eager(:context_models).all.each do |service|
+        nodes << { id: "s#{service.id}", size: 1, color: "#00F"}
+        service.context_models.each do |cm|
+          edges << { id: "c2s#{cm.id}_#{service.id}", source: "n#{cm.id}", target: "s#{service.id}"}
+        end
+      end
+
+      File.open("graph-visualization/data_#{day}.json", "w") do |f|
+        f.puts JSON.pretty_generate({nodes: nodes, edges: edges})
+      end
+    end
   end
 end

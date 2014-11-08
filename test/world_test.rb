@@ -2,40 +2,31 @@ require_relative 'test_helper'
 require 'world'
 require 'benchmark'
 
+reset_logs(["device_population_increase", "developer_population_increase"])
+
 module S2Eco
   class WorldTest < MiniTest::Test
-    def test_increase_user_population
-      skip
+    
+    def test_pop_t_devices_increase
+      
       world = World.new
-      
-      0.upto(DAYS_TOTAL).each do |day|
-        world.increase_user_population
-        log(
-          [day, world.users.count],
-          'user_count'
-        )
-        world.increase_day
-      end
-      
-      puts world.users.first.to_s
-    end
 
-    def test_increase_developer_population
-      skip
-      world = World.new
-      0.upto(DAYS_TOTAL).each do |day|
-        world.increase_developer_population
-        log(
-          [day, world.developers.count],
-          'developer_count'
-        )
+      DAYS_TOTAL.times do
+        population = world.pop_t_devices
+        log([world.current_day, population], "device_population_increase")
         world.increase_day
       end
     end
 
-    def test_simulate
+    def test_pop_t_dev_increase
       world = World.new
-      world.start
-    end
+
+      DAYS_TOTAL.times do
+        population = world.pop_t_dev
+        log([world.current_day, population], "developer_population_increase")
+        world.increase_day
+      end
+    end        
+
   end
 end

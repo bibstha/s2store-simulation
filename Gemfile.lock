@@ -4,6 +4,7 @@ GEM
     aliastable (1.0.0)
       skewheap (~> 1.0)
     awesome_print (1.2.0)
+    descriptive_statistics (2.3.0)
     minitest (5.4.2)
     sequel (4.16.0)
     skewheap (1.0.0)
@@ -14,5 +15,6 @@ PLATFORMS
 DEPENDENCIES
   aliastable
   awesome_print
+  descriptive_statistics
   minitest
   sequel (~> 4.16.0)

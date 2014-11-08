@@ -1,0 +1,16 @@
+# plot "context_model_count" using 1:2 with lines
+
+plot "../logs/n_d_d_daily" using 1:2 with lines, \
+  "../logs/n_d_d_daily" using 1:3 with lines, \
+  "../logs/n_d_d_daily" using 1:12 with lines
+#  "../logs/n_d_d_daily" using 1:4 with lines, \
+#  "../logs/n_d_d_daily" using 1:5 with lines, \
+#  "../logs/n_d_d_daily" using 1:6 with lines, \
+#  "../logs/n_d_d_daily" using 1:7 with lines, \
+#  "../logs/n_d_d_daily" using 1:8 with lines, \
+#  "../logs/n_d_d_daily" using 1:9 with lines, \
+#  "../logs/n_d_d_daily" using 1:10 with lines, \
+#  "../logs/n_d_d_daily" using 1:11 with lines, \
+  
+
+pause -1 "Hit any key to continue"

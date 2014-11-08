@@ -17,7 +17,8 @@ module S2Eco
   NUM_CM_MAX = 70
   NUM_CM_MIN = 1
   
-  DEV_MIN, DEV_MAX = [1, 180]
+  # DEV_MIN, DEV_MAX = [1, 180]
+  DEV_DURATION_RANGE = (1..180).to_a
   P_INACTIVE = 0.0027
 
   POP_MAX_DEV = 120_000
@@ -44,4 +45,14 @@ module S2Eco
 
   TOP_NEW_SERVICES  = 50
   TOP_BEST_SERVICES = 50
+
+  # - CM Simulation
+  POP_MIN_DEVICES = 5
+  POP_MAX_DEVICES = 10_000
+  S_DEVICES       = -0.01
+  D_DEVICES       = -5.0
+
+  P_SERVICE_DEVICE_MIN = 1
+  P_SERVICE_DEVICE_MAX = 50
+  P_M                  = (P_SERVICE_DEVICE_MAX - P_SERVICE_DEVICE_MIN).to_f / 1000
 end

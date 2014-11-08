@@ -1,0 +1,38 @@
+{
+  "nodes": [
+    {
+      "id": "d1",
+      "size": 3,
+      "center": true
+    },
+    {
+      "id": "n24",
+      "size": 78
+    },
+    {
+      "id": "n133",
+      "size": 5
+    },
+    {
+      "id": "n578",
+      "size": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e24",
+      "source": "n24",
+      "target": "d1"
+    },
+    {
+      "id": "e133",
+      "source": "n133",
+      "target": "d1"
+    },
+    {
+      "id": "e578",
+      "source": "n578",
+      "target": "d1"
+    }
+  ]
+}

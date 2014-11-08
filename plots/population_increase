@@ -1,0 +1,3 @@
+plot "../logs/device_population_increase" using 1:2 title "Device Popn" with lines, \
+  "../logs/developer_population_increase" using 1:2 title "Developer Popn" with lines
+pause -1 "Hit any key to continue"

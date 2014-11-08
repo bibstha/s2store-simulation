@@ -18,8 +18,8 @@ module S2Eco
       super(*args)
       self.create_day      ||= 0
       self.is_active       ||= true
-      self.dev_duration    ||= rand_dev_duration
-      self.dev_type        ||= rand(3) # between 0 and 2 inclusive
+      self.dev_duration    ||= DEV_DURATION_RANGE.sample
+      # self.dev_type        ||= rand(3) # between 0 and 2 inclusive
       self.last_service_produced_day ||= self.create_day
     end
 
@@ -52,12 +52,6 @@ module S2Eco
         devs_that_will_become_inactive << dev.id unless dev_stays_active
       end
       Developer.where(id: devs_that_will_become_inactive).update(is_active: false)
-    end
-
-    private
-    def rand_dev_duration
-      @dev_duration_range ||= DEV_MIN..DEV_MAX
-      rand(@dev_duration_range)
     end
 
   end

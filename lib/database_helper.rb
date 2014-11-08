@@ -20,18 +20,29 @@ def create_tables
 
     String      :name
     Integer     :create_day
+    Integer     :device_count
     String      :grid_marshaled
-  end  
 
-  DB.create_table :users do
+  end
+
+  DB.create_table :devices do
     primary_key :id
-
-    String      :name
     Integer     :create_day
-    Integer     :last_browse_day
-    Integer     :days_btw_browse
-    String      :grid_marshaled
-    TrueClass   :is_voter, index: true
+  end
+
+  DB.create_table :context_models do
+    primary_key :id
+    foreign_key :device_id, :devices
+    foreign_key :developer_id, :developers
+
+    Integer     :create_day
+    Integer     :reputation, default: 0
+  end
+
+  DB.create_table :context_models_services do
+    foreign_key :context_model_id, :context_models
+    foreign_key :service_id, :services
+    primary_key [:context_model_id, :service_id]
   end
 
   DB.create_table :downloads do
