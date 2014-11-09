@@ -1,9 +1,9 @@
 module S2Eco
   # Total number of days to simulate
   # DAYS_TOTAL   = 3
-  DAYS_TOTAL   = 10
+  # DAYS_TOTAL   = 10
   # DAYS_TOTAL   = 40
-  # DAYS_TOTAL   = 100
+  DAYS_TOTAL   = 100
   # DAYS_TOTAL   = 360
   # DAYS_TOTAL = 1080
 
@@ -18,15 +18,16 @@ module S2Eco
   NUM_CM_MAX = 70
   NUM_CM_MIN = 1
 
-  DEV_MIN, DEV_MAX = [1, 180]
+  DEV_MIN, DEV_MAX = [1, 90]
   P_INACTIVE = 0.0027
 
-  POP_MAX_DEV = 120_000
-  POP_MIN_DEV = 1_000
+  POP_MAX_DEV = 20_000
+  POP_MIN_DEV = 100
   S_DEV       = -0.005
   D_DEV       = -4.0
 
-  POP_MAX_USER = 400_000
+  # POP_MAX_USER = 400_000
+  POP_MAX_USER = 80_000
   POP_MIN_USER = 1_500
   S_USER       = -0.0038
   D_USER       = -4.0

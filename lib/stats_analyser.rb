@@ -40,10 +40,10 @@ module S2Eco
 
     def log_service_total_votes
       voted_services = @world.users.collect{ |u| u.voted_services.to_a }.flatten(1)
-      
+
       voted_services_grouped = voted_services.group_by(&:first).map{|k,v| [k, v.map{|s,vote| vote}]}.sort_by{|k,v| v.size}
       .to_h
-      
+
       p voted_services_grouped.first
       voted_services_grouped.each_with_index do |(service, votes), index|
         log([index, votes.size, votes.inject(:+).to_f / votes.size], "votes_data")
@@ -66,15 +66,7 @@ module S2Eco
 
     def daily_analysis_on(day)
 
-      # Vote Distribution
-      # average_votes = Download.select(:service_id){round(avg(vote)).as(vote)}
-      # .exclude(:vote => nil).group(:service_id).all
-      # vote_count = average_votes.group_by{ |dl| dl[:vote] }.map{|k,v| [k.to_i, v.count]}.to_h
-      
-      # vote_sorted = [1,2,3,4,5].map { |k| vote_count[k] || 0 }
-      # log([day] + vote_sorted, "vote_distribution_daily")
-
-      # Improvers
+      # Segregated vote count
       vote_count = lambda do |dev_type|
 
         services = Service.eager_graph(:developer).where(developer__dev_type: dev_type)
@@ -83,19 +75,20 @@ module S2Eco
         service_avg_votes = Download.select(:service_id){round(avg(vote)).as(avg_vote)}
           .where(service_id: services).exclude(vote: nil)
           .group(:service_id).to_hash(:service_id, :avg_vote)
-      
+
         votes = Array.new(5, 0)
         service_avg_votes.each { |service_id, avg_vote| votes[avg_vote.to_i - 1] += 1 }
 
         votes
       end
-      
+
       # 0: Innovator
       log([day, 0] + vote_count.call(0), "vote_distribution_daily")
       # 1: Ignorer
       log([day, 1] + vote_count.call(1), "vote_distribution_daily")
       # 2: Malicious
       log([day, 2] + vote_count.call(2), "vote_distribution_daily")
-    end   
+
+    end
   end
 end

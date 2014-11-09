@@ -13,12 +13,6 @@ module S2Eco
 
     def initialize
       @current_day   = 0
-      @developers    = []
-      @users         = []
-      @inactive_devs = []
-
-      @active_user_day_cache = 0
-      @active_users_today = []
 
       @before_start_day_listener = []
       @after_start_day_listener = []
@@ -87,7 +81,12 @@ module S2Eco
               # dl.update(vote: 1)
             # elsif dl.service.is_buggy?
             if dl.service.is_buggy?
-              dl.update(vote: rand(1..2))
+              keep_installed = [true, false].sample
+              if keep_installed
+                dl.update(vote: rand(1..2))
+              else
+                dl.delete
+              end
             else
               dl.update(vote: rand(3..5))
             end
@@ -154,10 +153,16 @@ module S2Eco
     # Make existing developers rework their applications
     def rework_existing_services(developers)
       dev_groups = developers.all.group_by(&:dev_type)
-      ap "Improvers: #{dev_groups[0].count}, Ignorers: #{dev_groups[1].count}, Improvers: #{dev_groups[2].count}"
+      # ap dev_groups
+      # dev_group_str = "Imporvers: "
+      # dev_groups.each do |type, devs|
+      #   dev_group_str << "#{type}: #{dev_groups[type].count}, " if dev_groups[type]
+      # end
+      # ap dev_group_str
+      # ap "Improvers: #{dev_groups[0].count}, Ignorers: #{dev_groups[1].count}, Improvers: #{dev_groups[2].count}"
 
       # 0: Improvers
-      dev_groups[0].each do |developer|
+      dev_groups[0] and dev_groups[0].each do |developer|
         developer.services.each do |service|
           service.fix_bug!
         end
@@ -165,7 +170,7 @@ module S2Eco
       # 1: Ignorers
       # do nothing
       # 2: Malicious
-      dev_groups[2].each do |developer|
+      dev_groups[2] and dev_groups[2].each do |developer|
         developer.services.each do |service|
           service.introduce_bug!
         end
@@ -182,7 +187,7 @@ end
 if __FILE__ == $0
 
   include S2Eco
-  # RubyProf.start
+  RubyProf.start
 
   # reset_logs %w[dev_count service_count download_count_items download_count_fd votes_data periodic_service_ranking service_count_2]
   reset_logs %w[service_count_daily developer_count_daily user_count_daily vote_distribution_daily]
@@ -192,13 +197,13 @@ if __FILE__ == $0
 
   world.add_before_start_day_listener do |day|
     ap "Start Day: #{day}"
-    ap "Start day #{day.to_s.ljust(4)}: Services: #{Service.count.to_s.ljust(5)}, "
-
-    ap "      Developers: #{Developer.count.to_s.ljust(5)} "
-    #   "(Inactive: #{Developer.inactive_developers.count.to_s.ljust(5)}, " \
-    #   "Ready: #{Developer.service_ready_developers(day + 1).count.to_s.ljust(5)})"
-
-    ap "      Users - Total: #{User.count.to_s.ljust(5)}, ReadyToBrowse: #{User.ready_to_browse_on(day).count}, "
+    # ap "Start day #{day.to_s.ljust(4)}: Services: #{Service.count.to_s.ljust(5)}, "
+    #
+    # ap "      Developers: #{Developer.count.to_s.ljust(5)} "
+    # #   "(Inactive: #{Developer.inactive_developers.count.to_s.ljust(5)}, " \
+    # #   "Ready: #{Developer.service_ready_developers(day + 1).count.to_s.ljust(5)})"
+    #
+    # ap "      Users - Total: #{User.count.to_s.ljust(5)}, ReadyToBrowse: #{User.ready_to_browse_on(day).count}, "
   end
 
   world.add_before_start_day_listener do |day|
@@ -213,8 +218,8 @@ if __FILE__ == $0
   world.start
   # analyser.analyse
 
-  # result  = RubyProf.stop
-  # printer = RubyProf::FlatPrinter.new(result)
-  # printer.print(STDOUT)
+  result  = RubyProf.stop
+  printer = RubyProf::FlatPrinter.new(result)
+  printer.print(STDOUT)
 
 end
