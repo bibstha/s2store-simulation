@@ -1,8 +1,9 @@
 module S2Eco
   # Total number of days to simulate
+  DAYS_TOTAL   = 3
   # DAYS_TOTAL   = 10
   # DAYS_TOTAL   = 40
-  DAYS_TOTAL   = 100
+  # DAYS_TOTAL   = 100
   # DAYS_TOTAL   = 360
   # DAYS_TOTAL = 1080
 
@@ -16,7 +17,7 @@ module S2Eco
   # NUM_CM = Number of CM possibly associated with a CM of X features
   NUM_CM_MAX = 70
   NUM_CM_MIN = 1
-  
+
   DEV_MIN, DEV_MAX = [1, 180]
   P_INACTIVE = 0.0027
 

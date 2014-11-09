@@ -20,8 +20,12 @@ module S2Eco
     end
 
     def grid
-      if self.grid_marshaled
+      if @grid
+        @grid
+      elsif self.grid_marshaled
         @grid ||= Marshal.load(self.grid_marshaled)
+      else
+        self.grid = generate_grid
       end
     end
 

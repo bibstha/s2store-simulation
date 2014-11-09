@@ -5,6 +5,7 @@ GEM
       skewheap (~> 1.0)
     awesome_print (1.2.0)
     minitest (5.4.2)
+    ruby-prof (0.15.1)
     sequel (4.16.0)
     skewheap (1.0.0)
 
@@ -15,4 +16,5 @@ DEPENDENCIES
   aliastable
   awesome_print
   minitest
+  ruby-prof
   sequel (~> 4.16.0)

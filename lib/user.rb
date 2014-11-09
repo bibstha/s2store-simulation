@@ -3,7 +3,7 @@ require 'set'
 
 module S2Eco
   class User < Sequel::Model
-    
+
     # many_to_many :services
     one_to_many :downloads
     many_to_many :services, join_table: :downloads
@@ -32,20 +32,10 @@ module S2Eco
       self.create_day       ||= 0
       self.days_btw_browse  ||= rand(BROWSE_RANGE)
       self.last_browse_day  ||= create_day - rand(0..days_btw_browse)
-      self.grid             ||= generate_grid
+      # self.grid             ||= generate_grid # comment this as we not generate only when required
       self.is_voter         ||= self.class.vote_rand_picker.generate
     end
-    # def initialize(join_day)
-    #   super()
-    #   @join_day           = join_day
-    #   @day                = join_day
-    #   @last_browsed_day   = join_day - rand(0..days_btw_browse)
-    #   @installed_services = Set.new
-    #   @voted_services     = {}
 
-    #   # Min app rating for download
-    #   @voter = self.class.vote_rand_picker.generate # true or false
-    # end
 
     def day=(day)
       @day = day
@@ -76,13 +66,13 @@ module S2Eco
       Download.where(user_id: id, vote: nil)
     end
 
-    def rand_cell_value(row, col)
-      if row < U_AVOID_SIZE && col < U_AVOID_SIZE
-        false
-      else
-        super
-      end
-    end
+    # def rand_cell_value(row, col)
+    #   if row < U_AVOID_SIZE && col < U_AVOID_SIZE
+    #     false
+    #   else
+    #     super
+    #   end
+    # end
 
     # def install_service(service)
     #   @installed_services << service

@@ -39,7 +39,7 @@ module S2Eco
 
         increase_day
         start_day
-        
+
         @after_start_day_listener.each{|l| l.call(day)}
       end
     end
@@ -47,7 +47,7 @@ module S2Eco
     # always starts with the 1st day, no 0th day
     def start_day
       # malicious_service_count = S2STORE.malicious_service_count
-      
+
       S2STORE.current_day = @current_day
       increase_entities
       users_download_services
@@ -64,7 +64,7 @@ module S2Eco
 
     def users_download_services
       User.ready_to_browse_on(@current_day).each do |u|
-        
+
         services = Set.new
         services.merge(S2STORE.top_new_services.all)
         services.merge(S2STORE.keyword_search_services.all)
@@ -78,7 +78,7 @@ module S2Eco
 
     def users_provide_feedback
       User.ready_to_browse_on(@current_day).where(is_voter: true).each do |user|
-        
+
         dls_to_vote = (user.unvoted_downloads.count * P_APPS_TO_VOTE).ceil
         # ap "Unvoted Downloads #{dls_to_vote}"
         if dls_to_vote > 0
@@ -106,7 +106,7 @@ module S2Eco
       increase_user_population
     end
 
-    
+
     def increase_developer_population
       # 1. Make some users inactive
       Developer.update_active_state
@@ -144,7 +144,7 @@ module S2Eco
     def increase_services(developers)
       rework_existing_services(developers)
       services = developers.map do |dev|
-        dev.produce_service(@current_day) do 
+        dev.produce_service(@current_day) do
           Service.new(create_day: @current_day, developer: dev)
         end
       end
@@ -158,7 +158,7 @@ module S2Eco
 
       # 0: Improvers
       dev_groups[0].each do |developer|
-        developer.services.each do |service| 
+        developer.services.each do |service|
           service.fix_bug!
         end
       end
@@ -182,33 +182,39 @@ end
 if __FILE__ == $0
 
   include S2Eco
+  # RubyProf.start
+
   # reset_logs %w[dev_count service_count download_count_items download_count_fd votes_data periodic_service_ranking service_count_2]
   reset_logs %w[service_count_daily developer_count_daily user_count_daily vote_distribution_daily]
-  
+
   world = World.new
   analyser = StatsAnalyser.new(S2STORE, world)
 
   world.add_before_start_day_listener do |day|
     ap "Start Day: #{day}"
-    # ap "Start day #{day.to_s.ljust(4)}: Services: #{Service.count.to_s.ljust(5)}, "
+    ap "Start day #{day.to_s.ljust(4)}: Services: #{Service.count.to_s.ljust(5)}, "
 
-    # ap "      Developers: #{Developer.count.to_s.ljust(5)} "\
+    ap "      Developers: #{Developer.count.to_s.ljust(5)} "
     #   "(Inactive: #{Developer.inactive_developers.count.to_s.ljust(5)}, " \
     #   "Ready: #{Developer.service_ready_developers(day + 1).count.to_s.ljust(5)})"
-    
-    # ap "      Users - Total: #{User.count.to_s.ljust(5)}, ReadyToBrowse: #{User.ready_to_browse_on(day).count}, "
+
+    ap "      Users - Total: #{User.count.to_s.ljust(5)}, ReadyToBrowse: #{User.ready_to_browse_on(day).count}, "
   end
 
   world.add_before_start_day_listener do |day|
     analyser.daily_analysis_on(day)
     # log([day, Service.count, Download.vote_count, Download.voted_service_count], "service_count_daily")
-    log([day, Developer.count, Developer.inactive_developers.count, Developer.service_ready_developers(day)], 
-      "developer_count_daily")
+    # log([day, Developer.count, Developer.inactive_developers.count, Developer.service_ready_developers(day)],
+      # "developer_count_daily")
     # log([day, User.count, User.voters.count], "user_count_daily")
     # log([day, Download.count], "vote_count_daily")
   end
 
-  world.start 
+  world.start
   # analyser.analyse
-  
+
+  # result  = RubyProf.stop
+  # printer = RubyProf::FlatPrinter.new(result)
+  # printer.print(STDOUT)
+
 end
