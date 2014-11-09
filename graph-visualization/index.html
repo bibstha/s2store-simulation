@@ -32,8 +32,8 @@
     }
   });
 
-  sigma.parsers.json('data_99.json', s, function() {
-    // this below adds x, y attributes as well as size = degree of the node 
+  sigma.parsers.json('data.json', s, function() {
+    // this below adds x, y attributes as well as size = degree of the node
     var i,
     nodes = s.graph.nodes(),
     len = nodes.length;
@@ -50,8 +50,8 @@
 
     // ForceAtlas Layout
     s.startForceAtlas2({
-      worker: true, 
-      barnesHutOptimize: true, 
+      worker: true,
+      barnesHutOptimize: true,
       iterationsPerRender: 1000,
       startingIterations: 1000
     });
