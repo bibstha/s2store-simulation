@@ -8,6 +8,7 @@ GEM
     ruby-prof (0.15.1)
     sequel (4.16.0)
     skewheap (1.0.0)
+    sqlite3 (1.3.9)
 
 PLATFORMS
   ruby
@@ -18,3 +19,4 @@ DEPENDENCIES
   minitest
   ruby-prof
   sequel (~> 4.16.0)
+  sqlite3

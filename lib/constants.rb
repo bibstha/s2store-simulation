@@ -1,7 +1,7 @@
 module S2Eco
   # Total number of days to simulate
-  DAYS_TOTAL   = 3
-  # DAYS_TOTAL   = 10
+  # DAYS_TOTAL   = 3
+  DAYS_TOTAL   = 10
   # DAYS_TOTAL   = 40
   # DAYS_TOTAL   = 100
   # DAYS_TOTAL   = 360
