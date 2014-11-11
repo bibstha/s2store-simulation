@@ -187,7 +187,7 @@ end
 if __FILE__ == $0
 
   include S2Eco
-  RubyProf.start
+  # RubyProf.start
 
   # reset_logs %w[dev_count service_count download_count_items download_count_fd votes_data periodic_service_ranking service_count_2]
   reset_logs %w[service_count_daily developer_count_daily user_count_daily vote_distribution_daily]
@@ -207,19 +207,18 @@ if __FILE__ == $0
   end
 
   world.add_before_start_day_listener do |day|
-    analyser.daily_analysis_on(day)
-    # log([day, Service.count, Download.vote_count, Download.voted_service_count], "service_count_daily")
-    # log([day, Developer.count, Developer.inactive_developers.count, Developer.service_ready_developers(day)],
-      # "developer_count_daily")
-    # log([day, User.count, User.voters.count], "user_count_daily")
+    # analyser.daily_analysis_on(day)
+    log([day, Service.count], "service_count_daily")
+    log([day, Developer.count], "developer_count_daily")
+    log([day, User.count], "user_count_daily")
     # log([day, Download.count], "vote_count_daily")
   end
 
   world.start
   # analyser.analyse
 
-  result  = RubyProf.stop
-  printer = RubyProf::FlatPrinter.new(result)
-  printer.print(STDOUT)
+  # result  = RubyProf.stop
+  # printer = RubyProf::FlatPrinter.new(result)
+  # printer.print(STDOUT)
 
 end

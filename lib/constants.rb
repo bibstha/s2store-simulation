@@ -3,7 +3,7 @@ module S2Eco
   # DAYS_TOTAL   = 3
   # DAYS_TOTAL   = 10
   # DAYS_TOTAL   = 40
-  DAYS_TOTAL   = 100
+  DAYS_TOTAL   = 550
   # DAYS_TOTAL   = 360
   # DAYS_TOTAL = 1080
 
