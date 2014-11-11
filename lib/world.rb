@@ -190,7 +190,8 @@ if __FILE__ == $0
   # RubyProf.start
 
   # reset_logs %w[dev_count service_count download_count_items download_count_fd votes_data periodic_service_ranking service_count_2]
-  reset_logs %w[service_count_daily developer_count_daily user_count_daily vote_distribution_daily]
+  # reset_logs %w[service_count_daily developer_count_daily user_count_daily vote_distribution_daily]
+  reset_logs %w[dev_user_service_download]
 
   world = World.new
   analyser = StatsAnalyser.new(S2STORE, world)
@@ -208,9 +209,12 @@ if __FILE__ == $0
 
   world.add_before_start_day_listener do |day|
     # analyser.daily_analysis_on(day)
-    log([day, Service.count], "service_count_daily")
-    log([day, Developer.count], "developer_count_daily")
-    log([day, User.count], "user_count_daily")
+    puts "HELLO SIR!"
+    log([day, Developer.count, User.count, Service.count, Download.count, "dev_user_service_download"])
+    # log([day, Service.count], "service_count_daily")
+    # log([day, Developer.count], "developer_count_daily")
+    # log([day, User.count], "user_count_daily")
+
     # log([day, Download.count], "vote_count_daily")
   end
 
